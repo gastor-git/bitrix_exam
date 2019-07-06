@@ -10,38 +10,111 @@ use \Bitrix\Main\IO;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class tsybayev_exam
+ */
 class tsybayev_exam extends CModule
 {
-    //public $exclusionAdminFiles = [];
+    /**
+     * ID модуля
+     *
+     * @var string
+     */
+    public $MODULE_ID = 'tsybayev.exam';
 
-    function __construct()
+    /**
+     * Версия модуля
+     *
+     * @var string
+     */
+    public $MODULE_VERSION;
+
+    /**
+     * Дата версии модуля
+     *
+     * @var string
+     */
+    public $MODULE_VERSION_DATE;
+
+    /**
+     * Название модуля
+     *
+     * @var string
+     */
+    public $MODULE_NAME;
+
+    /**
+     * Описание модуля
+     *
+     * @var string
+     */
+    public $MODULE_DESCRIPTION;
+
+    /**
+     * Путь до модуля
+     *
+     * @var string
+     */
+    public $MODULE_PATH;
+
+    /**
+     * Название партнера
+     *
+     * @var string
+     */
+    public $PARTNER_NAME;
+
+    /**
+     * Ссылка на сайт партнера
+     *
+     * @var string
+     */
+    public $PARTNER_URI;
+
+    /**
+     * Индекс сортировки модуля
+     *
+     * @var int
+     */
+    public $MODULE_SORT = 1;
+
+    /**
+     * Флаг доступа к модулю для админов
+     *
+     * @var string
+     */
+    public $SHOW_SUPER_ADMIN_GROUP_RIGHTS = 'Y';
+
+    /**
+     * Флаг проверки прав доступа к модулю
+     *
+     * @var string
+     */
+    public $MODULE_GROUP_RIGHTS = 'Y';
+
+    /**
+     * tsybayev_exam constructor.
+     */
+    public function __construct()
     {
-        $arModuleVersion = [];
-        include(__DIR__ . "/version.php");
-
-        /*$this->exclusionAdminFiles = [
-            '..',
-            '.',
-            'menu.php',
-            'operation_description.php',
-            'task_description.php',
-        ];*/
-
-        $this->MODULE_ID = 'tsybayev.exam';
-        $this->MODULE_VERSION = $arModuleVersion["VERSION"];
-        $this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
         $this->MODULE_NAME = Loc::getMessage("TSYBAYEV_EXAM_MODULE_NAME");
         $this->MODULE_DESCRIPTION = Loc::getMessage("TSYBAYEV_EXAM_MODULE_DESC");
-
         $this->PARTNER_NAME = Loc::getMessage("TSYBAYEV_EXAM_PARTNER_NAME");
         $this->PARTNER_URI = Loc::getMessage("TSYBAYEV_EXAM_PARTNER_URI");
 
-        $this->MODULE_SORT = 1;
-        $this->SHOW_SUPER_ADMIN_GROUP_RIGHTS = 'Y';
-        $this->MODULE_GROUP_RIGHTS = "Y";
+        $this->MODULE_PATH = $this->getModulePath();
+
+        $arModuleVersion = [];
+        include(__DIR__ . "/version.php");
+
+        $this->MODULE_VERSION = $arModuleVersion["VERSION"];
+        $this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
     }
 
-    function DoInstall()
+    /**
+     * Все действия по установке модуля
+     */
+    public function DoInstall()
     {
 
         // Проверка поддержки D7
@@ -57,16 +130,21 @@ class tsybayev_exam extends CModule
             $GLOBALS['APPLICATION']->ThrowException(Loc::getMessage("TSYBAYEV_EXAM_INSTALL_ERROR_RIGHTS"));
         }
 
+        // Регистрация модуля в системе
         ModuleManager::registerModule($this->MODULE_ID);
 
         $this->InstallDB();
         $this->InstallEvents();
         $this->InstallFiles();
 
-        $GLOBALS['APPLICATION']->IncludeAdminFile(Loc::getMessage("TSYBAYEV_EXAM_INSTALL_TITLE"), $this->GetPath() . "/install/step.php");
+        // Подключение файла с шагом установки (вывод ошибок или сообщения об успешной установке модуля)
+        $GLOBALS['APPLICATION']->IncludeAdminFile(Loc::getMessage("TSYBAYEV_EXAM_INSTALL_TITLE"), $this->MODULE_PATH . "/install/step.php");
     }
 
-    function DoUninstall()
+    /**
+     * Все действия по удалению модуля
+     */
+    public function DoUninstall()
     {
         // проверка прав согласно условию задания:
         // Устанавливать и удалять модуль может только пользователь с правами полного доступа
@@ -76,28 +154,35 @@ class tsybayev_exam extends CModule
             $GLOBALS['APPLICATION']->ThrowException(Loc::getMessage("TSYBAYEV_EXAM_INSTALL_ERROR_RIGHTS"));
         }
 
+        // Удаление модуля в 2 шага
         $request = Application::getInstance()->getContext()->getRequest();
-
+        // если первый шаг
         if ($request["step"] < 2) {
+            // подключить файл первого шага удаления модуля (фрма с запросом на удаление модуля с чекбоксом удалять ли таблицы в БД)
+            $GLOBALS['APPLICATION']->IncludeAdminFile(Loc::getMessage("TSYBAYEV_EXAM_UNINSTALL_TITLE"), $this->MODULE_PATH . "/install/unstep1.php");
 
-            $GLOBALS['APPLICATION']->IncludeAdminFile(Loc::getMessage("TSYBAYEV_EXAM_UNINSTALL_TITLE"), $this->GetPath() . "/install/unstep1.php");
-
-        } elseif ($request["step"] == 2) {
+        } elseif ($request["step"] == 2) { // если второй шаг
 
             $this->UnInstallFiles();
             $this->UnInstallEvents();
 
+            // если выбрано удаление таблиц в БД
             if ($request["savedata"] != "Y") {
                 $this->UnInstallDB();
             }
 
+            // отмена регистрации модуля в системе
             ModuleManager::unRegisterModule($this->MODULE_ID);
 
-            $GLOBALS['APPLICATION']->IncludeAdminFile(Loc::getMessage("TSYBAYEV_EXAM_UNINSTALL_TITLE"), $this->GetPath() . "/install/unstep2.php");
+            // Подключить фал второго шага удаления модуля (вывод ошибок или сообщения об успешном удалении модуля)
+            $GLOBALS['APPLICATION']->IncludeAdminFile(Loc::getMessage("TSYBAYEV_EXAM_UNINSTALL_TITLE"), $this->MODULE_PATH . "/install/unstep2.php");
         }
     }
 
-    function InstallDB()
+    /**
+     * Создание таблиц в БД
+     */
+    public function InstallDB()
     {
         Loader::includeModule($this->MODULE_ID);
 
@@ -108,7 +193,10 @@ class tsybayev_exam extends CModule
         }
     }
 
-    function UnInstallDB()
+    /**
+     * Удаление таблиц в БД
+     */
+    public function UnInstallDB()
     {
         Loader::includeModule($this->MODULE_ID);
 
@@ -116,92 +204,127 @@ class tsybayev_exam extends CModule
             ->queryExecute('drop table if exists '. Base::getInstance('\Tsybayev\Exam\TestTable')->getDBTableName());
     }
 
-    function InstallEvents()
+    /**
+     * Регистрация обработчиков событий
+     */
+    public function InstallEvents()
     {
-        //EventManager::getInstance()->registerEventHandler($this->MODULE_ID, 'TestEventExam', $this->MODULE_ID, '\Tsybayev\Exam\Event', 'eventHandler');
+        EventManager::getInstance()->registerEventHandler('main', 'OnPanelCreate', $this->MODULE_ID, '\Tsybayev\Exam\Event', 'onPanelCreateHandler');
     }
 
-    function UnInstallEvents()
+    /**
+     * Удаление регистрации обработчиков событий
+     */
+    public function UnInstallEvents()
     {
-        //EventManager::getInstance()->unRegisterEventHandler($this->MODULE_ID, 'TestEventExam', $this->MODULE_ID, '\Tsybayev\Exam\Event', 'eventHandler');
+        EventManager::getInstance()->unRegisterEventHandler('main', 'OnPanelCreate', $this->MODULE_ID, '\Tsybayev\Exam\Event', 'onPanelCreateHandler');
     }
 
-    function InstallFiles($arParams = [])
+    /**
+     * Копирование файлов
+     *
+     * @param array $arParams
+     * @return bool
+     */
+    public function InstallFiles()
     {
-        $path = $this->GetPath() . "/install/components";
+        // Копируем компоненты
+        $folderFromCopy = $this->MODULE_PATH . "/install/components";
 
-        if (IO\Directory::isDirectoryExists($path)) {
+        if (IO\Directory::isDirectoryExists($folderFromCopy)) {
+            if ($folderToCopy = $this->getComponentsPath()) {
 
-            CopyDirFiles($path, $_SERVER["DOCUMENT_ROOT"] . "/bitrix/components", true, true);
+                CopyDirFiles($folderFromCopy, $folderToCopy, true, true);
 
-        } else {
-            throw new IO\InvalidPathException($path);
+            }
         }
 
-        if (IO\Directory::isDirectoryExists($path = $this->GetPath() . '/admin')) {
+        // Копируем файлы для админки
+        $folderFromCopy =  $this->MODULE_PATH . "/install/admin";
+        $folderToCopy = Application::getDocumentRoot() . "/bitrix/admin";
 
-            CopyDirFiles($this->GetPath() . "/install/admin/", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/admin"); //если есть файлы для копирования
+        if (IO\Directory::isDirectoryExists($folderFromCopy)) {
 
-            /*if ($dir = opendir($path)) {
-                while (false !== $item = readdir($dir)) {
-                    if (in_array($item, $this->exclusionAdminFiles))
-                        continue;
-                    file_put_contents($_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin/' . $this->MODULE_ID . '_' . $item,
-                        '<' . '? require($_SERVER["DOCUMENT_ROOT"]."' . $this->GetPath(true) . '/admin/' . $item . '");?' . '>');
-                }
-                closedir($dir);
-            }*/
+            CopyDirFiles($this->MODULE_PATH . "/install/admin", $folderToCopy);
+
         }
 
         return true;
     }
 
-    function UnInstallFiles()
+    /**
+     * Удаление файлов
+     *
+     * @return bool
+     */
+    public function UnInstallFiles()
     {
-        IO\Directory::deleteDirectory($_SERVER["DOCUMENT_ROOT"] . '/bitrix/components/tsybayev/');
+        // Удаляем компоненты
+        $folderToDelete = $this->getComponentsPath() . '/' . $this->MODULE_ID;
 
-        if (IO\Directory::isDirectoryExists($path = $this->GetPath() . '/admin')) {
+        if (IO\Directory::isDirectoryExists($folderToDelete)) {
 
-            DeleteDirFiles($_SERVER["DOCUMENT_ROOT"] . $this->GetPath() . '/install/admin/', $_SERVER["DOCUMENT_ROOT"] . '/bitrix/admin');
+            IO\Directory::deleteDirectory($folderToDelete);
 
-            /*if ($dir = opendir($path)) {
-                while (false !== $item = readdir($dir)) {
-                    if (in_array($item, $this->exclusionAdminFiles))
-                        continue;
-                    \Bitrix\Main\IO\File::deleteFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin/' . $this->MODULE_ID . '_' . $item);
-                }
-                closedir($dir);
-            }*/
         }
+
+        // Удаляем файлы для админики
+        $folderToCompare = $this->MODULE_PATH . '/install/admin';
+        $folderToDelete = Application::getDocumentRoot() . "/bitrix/admin";
+
+        if (IO\Directory::isDirectoryExists($folderToCompare)) {
+
+            DeleteDirFiles($folderToCompare, $folderToDelete);
+
+        }
+
         return true;
     }
 
-    //Определяем место размещения модуля
-    public function GetPath($notDocumentRoot = false)
+    /**
+     * Возвращает путь к папке модуля
+     *
+     * @return string
+     */
+    protected function getModulePath()
     {
-        if ($notDocumentRoot) {
-            return str_ireplace(Application::getDocumentRoot(), '', dirname(__DIR__));
-        } else {
-            return dirname(__DIR__);
-        }
+        $modulePath = explode('/', __FILE__);
+        $modulePath = array_slice($modulePath, 0, array_search($this->MODULE_ID, $modulePath) + 1);
+
+        return implode('/', $modulePath);
     }
 
-    //Проверяем что система поддерживает D7
-    public function isVersionD7()
+    /**
+     * Возвращает путь где должны быть расположены компоненты модуля
+     * в зависимости от расположения модуля (в local/components/ или в bitrix/components/)
+     *
+     * @param bool $absolute
+     * @return string
+     */
+    protected function getComponentsPath($absolute = true)
+    {
+        $documentRoot = Application::getDocumentRoot();
+        if (strpos($this->MODULE_PATH, 'local/modules') !== false) {
+            $componentsPath = '/local/components';
+        } else {
+            $componentsPath = '/bitrix/components';
+        }
+
+        if ($absolute) {
+            $componentsPath = sprintf('%s%s', $documentRoot, $componentsPath);
+        }
+
+        return $componentsPath;
+    }
+
+    /**
+     * Поверяет что система поддерживает D7 (версия главного модуля не ниже 14.00.00)
+     *
+     * @return mixed
+     */
+    protected function isVersionD7()
     {
         return CheckVersion(ModuleManager::getVersion('main'), '14.00.00');
     }
 
-    function GetModuleRightList()
-    {
-        return [
-            "reference_id" => ["D", "K", "S", "W"],
-            "reference" => [
-                "[D] " . Loc::getMessage("TSYBAYEV_EXAM_DENIED"),
-                "[K] " . Loc::getMessage("TSYBAYEV_EXAM_READ_COMPONENT"),
-                "[S] " . Loc::getMessage("TSYBAYEV_EXAM_WRITE_SETTINGS"),
-                "[W] " . Loc::getMessage("TSYBAYEV_EXAM_FULL")
-            ]
-        ];
-    }
 }
