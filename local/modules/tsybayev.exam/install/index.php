@@ -210,6 +210,7 @@ class tsybayev_exam extends CModule
     public function InstallEvents()
     {
         EventManager::getInstance()->registerEventHandler('main', 'OnPanelCreate', $this->MODULE_ID, '\Tsybayev\Exam\Event', 'onPanelCreateHandler');
+        EventManager::getInstance()->registerEventHandler('main', 'OnUserTypeBuildList', $this->MODULE_ID, '\Tsybayev\Exam\CUserTypeMediaLibraryCollection', 'GetUserTypeDescription');
     }
 
     /**
@@ -218,6 +219,7 @@ class tsybayev_exam extends CModule
     public function UnInstallEvents()
     {
         EventManager::getInstance()->unRegisterEventHandler('main', 'OnPanelCreate', $this->MODULE_ID, '\Tsybayev\Exam\Event', 'onPanelCreateHandler');
+        EventManager::getInstance()->unRegisterEventHandler('main', 'OnUserTypeBuildList', $this->MODULE_ID, '\Tsybayev\Exam\CUserTypeMediaLibraryCollection', 'GetUserTypeDescription');
     }
 
     /**
