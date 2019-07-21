@@ -7,6 +7,11 @@ class Event
     public function onPanelCreateHandler()
     {
         global $APPLICATION;
+
+        if (!($APPLICATION->GetGroupRight("tsybayev.exam") > "D")) {
+            return;
+        }
+
         $APPLICATION->AddPanelButton(array(
             "ID" => 'bitrix_exam',
             "HREF" => "/bitrix/admin/tsybayev_exam_admin_page_list.php?lang=ru", // ссылка на кнопке
