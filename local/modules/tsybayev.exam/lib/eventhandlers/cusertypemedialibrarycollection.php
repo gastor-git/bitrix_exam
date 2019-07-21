@@ -1,6 +1,6 @@
 <?php
 
-namespace Tsybayev\Exam;
+namespace Tsybayev\Exam\EventHandlers;
 
 use CUserTypeString;
 use CUserTypeManager;

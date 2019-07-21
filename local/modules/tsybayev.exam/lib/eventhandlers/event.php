@@ -1,8 +1,6 @@
 <?php
 
-namespace Tsybayev\Exam;
-
-use \Bitrix\Main\Entity;
+namespace Tsybayev\Exam\EventHandlers;
 
 class Event
 {
