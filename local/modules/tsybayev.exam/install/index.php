@@ -209,8 +209,32 @@ class tsybayev_exam extends CModule
      */
     public function InstallEvents()
     {
-        EventManager::getInstance()->registerEventHandler('main', 'OnPanelCreate', $this->MODULE_ID, '\Tsybayev\Exam\Event', 'onPanelCreateHandler');
-        EventManager::getInstance()->registerEventHandler('main', 'OnUserTypeBuildList', $this->MODULE_ID, '\Tsybayev\Exam\CUserTypeMediaLibraryCollection', 'GetUserTypeDescription');
+        // создание кнопок в админ панели
+        EventManager::getInstance()->registerEventHandler(
+            'main',
+            'OnPanelCreate',
+            $this->MODULE_ID,
+            '\Tsybayev\Exam\EventHandlers\Event',
+            'onPanelCreateHandler'
+        );
+
+        // создание пользовательского св-ва типа Привязка к коллекции Медиабиблиотеки
+        EventManager::getInstance()->registerEventHandler(
+            'main',
+            'OnUserTypeBuildList',
+            $this->MODULE_ID,
+            '\Tsybayev\Exam\EventHandlers\CUserTypeMediaLibraryCollection',
+            'GetUserTypeDescription'
+        );
+
+        // создание своих тестов в Мониторе качества
+        EventManager::getInstance()->registerEventHandler(
+            'main',
+            'OnCheckListGet',
+            $this->MODULE_ID,
+            '\Tsybayev\Exam\EventHandlers\CheckListTests',
+            'onCheckListGet'
+        );
     }
 
     /**
@@ -218,8 +242,29 @@ class tsybayev_exam extends CModule
      */
     public function UnInstallEvents()
     {
-        EventManager::getInstance()->unRegisterEventHandler('main', 'OnPanelCreate', $this->MODULE_ID, '\Tsybayev\Exam\Event', 'onPanelCreateHandler');
-        EventManager::getInstance()->unRegisterEventHandler('main', 'OnUserTypeBuildList', $this->MODULE_ID, '\Tsybayev\Exam\CUserTypeMediaLibraryCollection', 'GetUserTypeDescription');
+        EventManager::getInstance()->unRegisterEventHandler(
+            'main',
+            'OnPanelCreate',
+            $this->MODULE_ID,
+            '\Tsybayev\Exam\EventHandlers\Event',
+            'onPanelCreateHandler'
+        );
+
+        EventManager::getInstance()->unRegisterEventHandler(
+            'main',
+            'OnUserTypeBuildList',
+            $this->MODULE_ID,
+            '\Tsybayev\Exam\EventHandlers\CUserTypeMediaLibraryCollection',
+            'GetUserTypeDescription'
+        );
+
+        EventManager::getInstance()->unRegisterEventHandler(
+            'main',
+            'OnCheckListGet',
+            $this->MODULE_ID,
+            '\Tsybayev\Exam\EventHandlers\CheckListTests',
+            'onCheckListGet'
+        );
     }
 
     /**
